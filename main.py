@@ -13,9 +13,9 @@ def modelQuery():
     return models["models"]
 
 def queryOllama():
-    if requests.get(baseURL) == 200:
-        return False
-    return True
+    if requests.get(baseURL).status_code == 200:
+        return True
+    return False
 def promptQuery(messagesHistory):
     data = {"model": "mistral", "messages": messagesHistory, "stream": False}
     headers = {
@@ -27,35 +27,36 @@ def promptQuery(messagesHistory):
     return text
 
 
+
 #print("RESPONSE",promptQuery(userPrompt))
 modelList = modelQuery()
 def main():
     with st.sidebar:
         st.text(f'Currently Running: {modelList[0]["name"]}')
 
-st.title("Ollama GPT")
+    st.title("Ollama GPT")
 
+    if "messages" not in st.session_state or len(st.session_state["messages"]) == 0:
+        st.session_state["messages"] = [{"role":"assistant", "content": "How can I help you ?"}]
 
-if "message" not in st.session_state:
-    st.session_state["messages"] = [{"role":"assistant", "content": "How can I help you ?"}]
+    messages = st.session_state.get("messages", [])
 
-for msg in st.session_state.messages:
-    st.chat_message(msg["role"]).write(msg["content"])
+    for msg in st.session_state["messages"]:
+        st.chat_message(msg["role"]).write(msg["content"])
 
-if prompt := st.chat_input(key=msg):
-    if queryOllama() == False:
-        st.info("Server is off please start ollama by opening ollama or running the command ```ollama serve``` from your terminal")
-        st.stop()
+    if user_input := st.chat_input():
+        if queryOllama() == False:
+            st.info("Server is off please start ollama by opening ollama or running the command ```ollama serve``` from your terminal")
+            st.stop()
 
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    st.chat_message("user").write(prompt)
-    print("MESSAGES", st.session_state.messages)
-    response = promptQuery(st.session_state.messages)
-    print("RESPONSE", response)
-    msg = response["content"]
-    st.session_state.messages.append({"role": "assistant", "content": msg})
-    st.chat_message("assistant").write(msg)
-
+        messages.append({"role": "user", "content": user_input})
+        st.chat_message("user").write(user_input)
+        st.session_state["messages"] = messages
+        response = promptQuery(st.session_state["messages"])
+        msg = response["content"]
+        messages.append({"role": "assistant", "content": msg})
+        st.session_state["messages"] = messages
+        st.chat_message("assistant").write(msg)
 
 
 
