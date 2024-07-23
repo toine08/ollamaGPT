@@ -15,7 +15,7 @@ def modelQuery():
         models_name = models["models"]
         return models_name
     except requests.exceptions.RequestException:
-        st.info("Server is off. Please start Ollama by opening Ollama or running the command ```ollama serve``` from your terminal")
+        pass
         return []
 
 def queryOllama():
@@ -37,14 +37,17 @@ def promptQuery(messagesHistory):
         print(text)
         return text
     except requests.exceptions.RequestException:
-         st.info("Server is off. Please start Ollama by opening Ollama or running the command ```ollama serve``` from your terminal")
+         pass
 
-modelList = modelQuery()
-modelName = modelList[0]["name"]
+try:
+    modelList = modelQuery()
+    modelName = modelList[0]["name"]
+except IndexError:
+    pass
 
 def main():
     if not queryOllama():
-        st.info("Server is off. Please start Ollama by opening Ollama or running the command ```ollama serve``` from your terminal")
+        st.error("Server is off. Please start Ollama by opening Ollama or running the command ```ollama serve``` from your terminal")
 
     with st.sidebar:
         if modelList:
