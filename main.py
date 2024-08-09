@@ -1,6 +1,7 @@
 import requests
 import json
 import streamlit as st
+import subprocess
 
 baseURL = "http://127.0.0.1:11434"
 promptURL = baseURL + "/api/chat"
@@ -49,6 +50,7 @@ def main():
     if not queryOllama():
         st.error("Server is off. Please start Ollama by opening Ollama or running the command ```ollama serve``` from your terminal")
 
+    st.set_page_config(page_title="OllamaGPT",initial_sidebar_state="collapsed")
     with st.sidebar:
         if modelList:
             st.text(f'Currently running on: {modelName}')
@@ -79,4 +81,18 @@ def main():
         st.chat_message("assistant").write(response)
 
 if __name__ == "__main__":
-    main()
+    try:
+        output = subprocess.check_output(['bash', '-c', 'ollama list'])
+        # Decode the output from bytes to string
+        output = output.decode('utf-8')
+        # Split the output into individual lines
+        lines = output.split('\n')
+        # Get the 1st line (assuming it contains the LLM name)
+        llm_name,_,_ = lines[1].partition(":").strip()
+        # Run the second command (ollama run) with the captured LLM name as input
+        subprocess.run(['bash', '-c', f'ollama run {llm_name}'])
+
+    except:
+        pass
+    finally:
+        main()
